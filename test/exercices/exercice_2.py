@@ -4,8 +4,6 @@ import requests
 from nose.tools import assert_equals, assert_true
 import ujson
 
-HEADERS = {'content-type': 'application/json'}
-
 #make a POST request
 
 response = requests.post('http://localhost:8081/v1.0/users')
