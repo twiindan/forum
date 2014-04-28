@@ -62,7 +62,6 @@ print new_json_body
 new_json_body = ujson.dumps(new_json_body)
 print new_json_body
 
-
 #OK... Now we can do the POST request
 
 response = requests.post(url='http://localhost:8081/v1.0/users', data=new_json_body)
