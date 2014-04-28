@@ -13,6 +13,7 @@ url = 'http://httpbin.org/cookies'
 cookies = {'my_cookie_is': 'delicious'}
 
 response = requests.get(url=url, cookies=cookies)
+print response.status_code
 response.content
 
 
@@ -22,6 +23,7 @@ url = 'http://httpbin.org/post'
 files = {'file': open('__init__.py', 'rb')}
 
 response = requests.post(url, files=files)
+print response.status_code
 response.content
 
 ### ANOTHER TOPICS

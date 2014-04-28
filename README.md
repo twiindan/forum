@@ -1,5 +1,12 @@
 # LEARNING PYTHON REQUESTS LIBRARY
 
+## HOW TO RUN THE FORUM APPLICATION
+
+    pyhton forum/forum.py
+
+    The application is started in localhost using the 8081 port
+
+
 ## FORUM API
 
 ### URL ROOT:
