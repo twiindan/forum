@@ -42,7 +42,7 @@ class TestCreateUser():
     def test_create_user_with_none_values(self):
 
         name = 'toni'
-        username = 'qaforever'
+        username = 'hello'
         pwd = 'easypwd'
         role = 'QA'
         email = 'arobres@tid.es'

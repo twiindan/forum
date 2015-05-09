@@ -1,6 +1,13 @@
 __author__ = 'arobres'
 import string
 import random
+from commons.constants import THEME, SUBJECT, MESSAGES, FORUM_THEMES
+from commons.rest_utils import RestUtils
+from nose.tools import assert_equals, assert_true
+
+
+
+api_utils = RestUtils()
 
 
 def id_generator(size=10, chars=string.ascii_letters + string.digits):
@@ -66,3 +73,36 @@ def replace_values_from_dict(dict_replace, key, replace_to=None):
             replace_values_from_dict(v, key)
 
     return dict_replace
+
+
+def create_body(theme=None, subject=None, message=None):
+
+        body = {THEME: theme, SUBJECT: subject, MESSAGES: message}
+        return body
+
+
+def create_default_body():
+
+    theme = 'testing'
+    subject = 'QA movie'
+    message = 'New movie about QA people!'
+
+    return create_body(theme=theme, subject=subject, message=message)
+
+
+def create_random_message():
+
+    theme = random.choice(FORUM_THEMES)
+    subject = id_generator(random.randint(1, 20))
+    message = id_generator(random.randint(20, 200))
+
+    return create_body(theme=theme, subject=subject, message=message)
+
+
+def create_several_forum_messages(num_messages):
+    for x in range(num_messages):
+        body = create_random_message()
+        print body
+        response = api_utils.create_message_forum(body=body)
+        assert_true(response.ok)
+        assert_equals(response.content, 'message created')

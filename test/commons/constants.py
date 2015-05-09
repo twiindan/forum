@@ -6,6 +6,5 @@ THEME = u'theme'
 SUBJECT = u'subject'
 MESSAGES = u'message'
 FORUM_KEYS = [THEME, SUBJECT, MESSAGES]
-
-# FORUM LIST VALUES
+FORUM_THEMES = ['Security', 'Development', 'Automation', 'Testing']
 

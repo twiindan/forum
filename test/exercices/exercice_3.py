@@ -6,7 +6,7 @@ import ujson
 
 #OK WE NOW CAN SEND MESSAGES TO THE FORUM
 
-THEME_LIST = ['security', 'development', 'automation', 'testing']
+THEME_LIST = ['Security', 'Development', 'Automation', 'Testing']
 message_body = {}
 message_body['theme'] = ''
 message_body['subject'] = ''
@@ -38,22 +38,22 @@ except:
 
 print json_response
 
-print json_response['messages']['development']
+print json_response['Development']
 
-print json_response['messages']['development'][0]
+print json_response['Development'][0]
 
 
 #THIS API ALLOW HTTP QUERY PARAMETERS TO FILTER BY THEME
 #FIRST CREATE A DICT WITH THE FILTER USING THE PATTERN {'key': 'value'}
 
-payload = {'theme': 'security'}
+payload = {'theme': 'Security'}
 
 #AFTER INCLUDE IT IN THE REQUEST
 response = requests.get(url='http://localhost:8081/v1.0/forum', params=payload)
 print (response.url)
 
 #Verify the response
-assert_true(response.ok)
+assert_true(response.ok, response.content)
 
 #Convert to JSON
 try:
@@ -61,7 +61,7 @@ try:
 except:
     print 'Error: THE RESPONSE NOT HAS JSON FORMAT'
 
-print json_response['messages']['development']
+print json_response['Security']
 
 print json_response
 
