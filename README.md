@@ -2,7 +2,7 @@
 
 ## HOW TO RUN THE FORUM APPLICATION
 
-    pyhton forum/forum.py
+    python forum/forum.py
 
     The application is started in localhost using the 8081 port
 
