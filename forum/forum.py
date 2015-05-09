@@ -1,6 +1,6 @@
 __author__ = 'arobres'
 
-from bottle import route, run, template, Bottle, request, response, auth_basic
+from bottle import run, Bottle, request, response, auth_basic
 from collections import defaultdict
 import ujson
 
@@ -9,7 +9,7 @@ user_list = []
 USER_ATTRIBUTES = {'name', 'username', 'password', 'role', 'email'}
 FORUM_ATTRIBUTES = {'theme', 'subject', 'message'}
 ROLES = ['QA', 'DEVELOPER', 'MANAGER']
-THEMES = ['security', 'development', 'automation', 'testing']
+THEMES = ['Security', 'Development', 'Automation', 'Testing']
 user_messages_dict = defaultdict(list)
 forum_messages_dict = defaultdict(list)
 
@@ -20,6 +20,18 @@ def check_username(username, password):
             if user['password'] == password:
                 return True
     return False
+
+
+@app.get("/v1.0/welcome")
+@app.get("/v1.0/welcome/")
+def im_alive():
+
+    if request.get_cookie("visited"):
+        return "Welcome back! Nice to see you again"
+    else:
+        response.set_cookie("visited", "yes")
+        return "Hello there! Nice to meet you"
+
 
 @app.get("/v1.0")
 @app.get("/v1.0/")
@@ -47,10 +59,22 @@ def create_user():
     if body['role'] not in ROLES:
         response.status = 400
         return {"message": "Role not valid"}
+
+    if find_user(body['username']):
+        return {"message": "User exist!"}
+
     else:
         user_list.append(body)
 
     return 'user created'
+
+@app.get("/v1.0/users")
+@app.get("/v1.0/users/")
+def list_users():
+    if len(user_list) == 0:
+        return "No users created"
+    else:
+        return {'users': user_list}
 
 
 @app.post("/v1.0/users/inbox/<username>")
@@ -126,15 +150,16 @@ def get_messages():
     theme_to_filter = request.query.getall('theme')
 
     if len(theme_to_filter) == 0:
-        messages = []
-        print type(forum_messages_dict)
-        print len(forum_messages_dict)
-        return {'messages': forum_messages_dict}
+
+        return forum_messages_dict
+
 
     if len(theme_to_filter) == 1:
 
         message_list = forum_messages_dict[theme_to_filter[0]]
-        return {'messages': message_list}
+        return {theme_to_filter[0]: message_list}
+
+
 
 
 def find_user(username):
