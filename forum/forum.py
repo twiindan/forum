@@ -61,6 +61,7 @@ def create_user():
         return {"message": "Role not valid"}
 
     if find_user(body['username']):
+        response.status = 409
         return {"message": "User exist!"}
 
     else:
