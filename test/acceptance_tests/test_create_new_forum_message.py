@@ -1,10 +1,12 @@
 __author__ = 'arobres'
 
 from commons.rest_utils import RestUtils
-from nose.tools import assert_equals, assert_true
 from commons.utils import assert_json_format, delete_keys_from_dict
-from commons.constants import THEME, SUBJECT, MESSAGES, FORUM_KEYS
-from commons.utils import create_default_body
+from commons.constants import THEME, MESSAGES, FORUM_KEYS
+from commons.body_builders import create_default_forum_message_body
+
+from nose.tools import assert_equals, assert_true
+
 
 
 class TestCreateUser():
@@ -17,7 +19,7 @@ class TestCreateUser():
 
     def test_create_message_with_all_parameters(self):
 
-        body = create_default_body()
+        body = create_default_forum_message_body()
         response = self.api_utils.create_message_forum(body=body)
         assert_true(response.ok)
         assert_equals(response.content, 'message created')
@@ -26,7 +28,7 @@ class TestCreateUser():
 
     def test_create_message_with_none_parameters(self):
 
-        body = create_default_body()
+        body = create_default_forum_message_body()
         body[THEME] = None
 
         response = self.api_utils.create_message_forum(body=body)
@@ -39,7 +41,7 @@ class TestCreateUser():
 
         for key in FORUM_KEYS:
 
-            body = create_default_body()
+            body = create_default_forum_message_body()
             body = delete_keys_from_dict(dict_del=body, key=key)
             response = self.api_utils.create_message_forum(body=body)
             assert_equals(response.status_code, 400)
@@ -56,10 +58,10 @@ class TestCreateUser():
 
     def test_create_message_with_incorrect_theme(self):
 
-        theme_list = ['QA', 'Security', '', 'AUTOMATION', '"testing"']
+        theme_list = ['QA', 'security', '', 'AUTOMATION', '"testing"']
         for theme in theme_list:
 
-            body = create_default_body()
+            body = create_default_forum_message_body()
             body[THEME] = theme
             response = self.api_utils.create_message_forum(body=body)
             assert_equals(response.status_code, 400)
