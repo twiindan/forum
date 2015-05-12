@@ -15,8 +15,6 @@ class TestCreateUser():
     def setup_class(self):
         self.api_utils = RestUtils()
 
-
-
     def test_create_message_with_all_parameters(self):
 
         body = create_default_forum_message_body()
