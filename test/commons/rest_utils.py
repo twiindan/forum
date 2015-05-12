@@ -7,6 +7,11 @@ import logging
 
 from configuration import FORUM_HOSTNAME, FORUM_PORT, HEADERS
 
+
+POST = 'post'
+GET = 'get'
+DELETE = 'delete'
+
 SERVER_ROOT = 'http://{}:{}/v1.0'.format(FORUM_HOSTNAME, FORUM_PORT)
 CREATE_USER_PATTERN = '{url_root}/users/'
 CREATE_MESSAGE_FORUM = '{url_root}/forum/'
@@ -61,50 +66,35 @@ class RestUtils(object):
 
         return r
 
-    def create_user(self, name=None, username=None, pwd=None, role=None, email=None, body=None, headers=HEADERS):
+    def create_user(self, body=None, headers=HEADERS):
 
-        if not body:
+        return self._call_api(pattern=CREATE_USER_PATTERN, method=POST, headers=headers, body=body)
 
-            body = {'name': name,
-                    'username': username,
-                    'password': pwd,
-                    'role': role,
-                    'email': email
-                    }
+    def create_message_forum(self, body=None, headers=None):
 
-        return self._call_api(pattern=CREATE_USER_PATTERN, method='post', headers=HEADERS, body=body)
-
-    def create_message_forum(self, theme=None, subject=None, message=None, body=None, headers=None):
-
-        if not body:
-
-            body = {'theme': theme,
-                    'subject': subject,
-                    'message': message}
-
-        return self._call_api(pattern=CREATE_MESSAGE_FORUM, method='post', headers=headers, body=body)
+        return self._call_api(pattern=CREATE_MESSAGE_FORUM, method=POST, headers=headers, body=body)
 
     def retrieve_forum_messages(self, theme=None, headers=HEADERS):
 
         if theme is not None:
             payload = {'theme': theme}
 
-        return self._call_api(pattern=CREATE_MESSAGE_FORUM, method='get', headers=headers, payload=payload)
+        return self._call_api(pattern=CREATE_MESSAGE_FORUM, method=GET, headers=headers, payload=payload)
 
     def send_private_messages(self, message_body=None, username=None, headers=HEADERS):
 
         body = {'message': message_body}
 
-        return self._call_api(pattern=USER_INBOX, method='post', headers=headers, body=body, username=username)
+        return self._call_api(pattern=USER_INBOX, method=POST, headers=headers, body=body, username=username)
 
     def get_private_messages(self, username=None, pwd=None, headers=HEADERS):
 
         authentication = (username, pwd)
-        return self._call_api(pattern=USER_INBOX, method='get', headers=headers, username=username,
+        return self._call_api(pattern=USER_INBOX, method=GET, headers=headers, username=username,
                               auth=authentication)
 
     def delete_private_messages(self, username=None, pwd=None, headers=HEADERS):
 
         authentication = (username, pwd)
-        return self._call_api(pattern=USER_INBOX, method='delete', headers=headers, username=username,
+        return self._call_api(pattern=USER_INBOX, method=DELETE, headers=headers, username=username,
                               auth=authentication)
