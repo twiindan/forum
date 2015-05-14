@@ -30,7 +30,7 @@ assert_equals(response.status_code, 200)
 #ASSERT THE RESPONSE CONTENT
 assert_equals(response.content, 'message created')
 
-#SEND A REQUEST TO OBTAIN ºALL THE MESSAGES FROM THE FORUM
+#SEND A REQUEST TO OBTAIN ALL THE MESSAGES FROM THE FORUM
 response = requests.get(url=url)
 
 #ASSERT THE STATUS CODE
