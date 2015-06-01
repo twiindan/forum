@@ -2,6 +2,8 @@ import requests
 from nose.tools import assert_equals
 import ujson
 
+#RESET ALL DATA IN THE SERVER
+requests.get('http://localhost:8081/v1.0/reset')
 
 #MAKE A REQUEST TO PUBLISH A MESSAGE TO THE FORUM
 '''

@@ -13,6 +13,8 @@ ASSERT THE STATUS CODE (200) and the response content (message created)
 MAKE A GET REQUEST TO OBTAIN ALL THE MESSAGES PUBLISHED IN THE FORUM
 '''
 
+requests.get('http://localhost:8081/v1.0/reset')
+
 url = 'http://localhost:8081/v1.0/forum'
 
 #DEFINE THE BODY IN A DICTIONARY WITH THE PARAMETERS REQUIRED
@@ -30,7 +32,7 @@ assert_equals(response.status_code, 200)
 #ASSERT THE RESPONSE CONTENT
 assert_equals(response.content, 'message created')
 
-#SEND A REQUEST TO OBTAIN ºALL THE MESSAGES FROM THE FORUM
+#SEND A REQUEST TO OBTAIN ALL THE MESSAGES FROM THE FORUM
 response = requests.get(url=url)
 
 #ASSERT THE STATUS CODE

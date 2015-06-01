@@ -22,6 +22,14 @@ def check_username(username, password):
     return False
 
 
+@app.get("/v1.0/reset")
+@app.get("/v1.0/reset/")
+def reset_data():
+    del user_list[:]
+    user_messages_dict.clear()
+    forum_messages_dict.clear()
+
+
 @app.get("/v1.0/welcome")
 @app.get("/v1.0/welcome/")
 def im_alive():
