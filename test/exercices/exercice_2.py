@@ -20,8 +20,8 @@ ASSERT THE STATUS CODE (200) and the response content (user created)
 '''
 
 #DEFINE THE VARIABLES TO BE USED
-username = 'expoqa'
-password = 'expoqa'
+username = 'vlctesting'
+password = 'vlctesting'
 message_to_send = 'Hello user! Is your first message!'
 create_user_url = 'http://localhost:8081/v1.0/users'
 send_message_url = 'http://localhost:8081/v1.0/users/inbox/expoqa'
