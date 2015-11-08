@@ -27,10 +27,10 @@ username = 'vlctesting'
 password = 'vlctesting'
 message_to_send = 'Hello user! Is your first message!'
 create_user_url = 'http://localhost:8081/v1.0/users'
-send_message_url = 'http://localhost:8081/v1.0/users/inbox/expoqa'
+send_message_url = 'http://localhost:8081/v1.0/users/inbox/vlctesting'
 
 #DEFINE THE BODY TO CREATE A NEW USER
-user_body = {'name': 'expoqa', 'username': username, 'password': password, 'role': 'QA', 'email': 'contact@expoqa.com'}
+user_body = {'name': 'vlc', 'username': username, 'password': password, 'role': 'QA', 'email': 'contact@vlctesting.com'}
 
 #CONVERT THE PYTHON DICTIONARY IN JSON WITH ujson.dumps
 user_body = ujson.dumps(user_body)
