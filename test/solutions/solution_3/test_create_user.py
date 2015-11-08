@@ -25,11 +25,11 @@ class TestCreateUser():
 
     def test_create_user_with_all_parameters(self):
 
-        name = 'expoqa'
+        name = 'vlc'
         username = 'hello'
         pwd = 'easypwd'
         role = 'QA'
-        email = 'expoqa@expoqa.es'
+        email = 'vlc@vlc.es'
 
         request_body = create_user_body(name=name, username=username, pwd=pwd, role=role, email=email)
         print request_body
@@ -44,7 +44,7 @@ class TestCreateUser():
         username = 'qaforever'
         pwd = 'easypwd'
         role = 'tester'
-        email = 'expoqa@expoqa.es'
+        email = 'vlc@vlc.es'
 
         request_body = create_user_body(name=name, username=username, pwd=pwd, role=role, email=email)
 
@@ -56,11 +56,11 @@ class TestCreateUser():
 
     def test_existent_user(self):
 
-        name = 'expoqa'
+        name = 'vlc'
         username = 'hello'
         pwd = 'easypwd'
         role = 'QA'
-        email = 'expoqa@expoqa.es'
+        email = 'vlc@vlc.es'
 
         request_body = create_user_body(name=name, username=username, pwd=pwd, role=role, email=email)
 
