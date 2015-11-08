@@ -22,6 +22,7 @@ class TestCreateUser():
     def setup_class(self):
 
         self.api_utils = RestUtils()
+        self.api_utils.reset_mock()
 
     def test_create_user_with_all_parameters(self):
         pass

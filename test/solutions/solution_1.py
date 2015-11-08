@@ -13,6 +13,8 @@ ASSERT THE STATUS CODE (200) and the response content (message created)
 MAKE A GET REQUEST TO OBTAIN ALL THE MESSAGES PUBLISHED IN THE FORUM
 '''
 
+requests.get('http://localhost:8081/v1.0/reset')
+
 url = 'http://localhost:8081/v1.0/forum'
 
 #DEFINE THE BODY IN A DICTIONARY WITH THE PARAMETERS REQUIRED

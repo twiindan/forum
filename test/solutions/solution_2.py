@@ -19,6 +19,9 @@ THE ROLE SHOULD BE ONE OF THE FOLLOWING OPTIONS: QA, DEVELOPER, MANAGER
 ASSERT THE STATUS CODE (200) and the response content (user created)
 '''
 
+requests.get('http://localhost:8081/v1.0/reset')
+
+
 #DEFINE THE VARIABLES TO BE USED
 username = 'vlctesting'
 password = 'vlctesting'

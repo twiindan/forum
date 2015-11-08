@@ -15,6 +15,7 @@ SERVER_ROOT = 'http://{}:{}/v1.0'.format(FORUM_HOSTNAME, FORUM_PORT)
 CREATE_USER_PATTERN = '{url_root}/users/'
 CREATE_MESSAGE_FORUM = '{url_root}/forum/'
 USER_INBOX = '{url_root}/users/inbox/{username}'
+RESET_PATTERN = '{url_root}/reset'
 
 
 class RestUtils(object):
@@ -62,3 +63,7 @@ class RestUtils(object):
 
         #DEFINE THE CALL API WITH THE REQUIRED PARAMETERS (PATTERN, METHOD, HEADERS, BODY)
         pass
+
+    def reset_mock(self):
+
+        return self._call_api(pattern=RESET_PATTERN, method=GET, headers=HEADERS)

@@ -15,6 +15,7 @@ class TestCreateUser():
     @classmethod
     def setup_class(self):
         self.api_utils = RestUtils()
+        self.api_utils.reset_mock()
 
     def test_create_message_with_all_parameters(self):
 
