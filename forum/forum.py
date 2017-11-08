@@ -92,7 +92,7 @@ def list_users():
 @app.post("/v1.0/users/inbox/<username>/")
 def create_user_message(username):
 
-    body = "".join(request.body)
+    body = b"".join(request.body)
     try:
         body = ujson.loads(body)
     except:
@@ -132,7 +132,7 @@ def delete_messages_from_user(username):
 @app.post("/v1.0/forum/")
 def publish_to_forum():
 
-    body = "".join(request.body)
+    body = b"".join(request.body)
     try:
         body = ujson.loads(body)
     except:
