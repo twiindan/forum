@@ -52,7 +52,7 @@ def im_alive():
 @app.post("/v1.0/users")
 @app.post("/v1.0/users/")
 def create_user():
-
+    print (request.body)
     body = "".join(request.body)
     try:
         body = ujson.loads(body)
