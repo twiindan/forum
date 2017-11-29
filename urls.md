@@ -4,7 +4,7 @@ https://api-testing-conference.herokuapp.com/v1.0/
 ### Forum webapplication
 https://forum-testing.herokuapp.com/v1.0/
 
-### Swagger Forum API definition 
+### Swagger API definition
 
 https://app.swaggerhub.com/apis/twiindan/forum-conference/1.0.0
 
