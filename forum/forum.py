@@ -3,6 +3,8 @@ __author__ = 'arobres'
 from bottle import run, Bottle, request, response, auth_basic
 from collections import defaultdict
 import ujson
+from sys import argv
+
 
 app = Bottle()
 user_list = []
@@ -50,8 +52,8 @@ def im_alive():
 @app.post("/v1.0/users")
 @app.post("/v1.0/users/")
 def create_user():
-
-    body = "".join(request.body)
+    print (request.body)
+    body = b"".join(request.body)
     try:
         body = ujson.loads(body)
     except:
@@ -90,7 +92,7 @@ def list_users():
 @app.post("/v1.0/users/inbox/<username>/")
 def create_user_message(username):
 
-    body = "".join(request.body)
+    body = b"".join(request.body)
     try:
         body = ujson.loads(body)
     except:
@@ -130,7 +132,7 @@ def delete_messages_from_user(username):
 @app.post("/v1.0/forum/")
 def publish_to_forum():
 
-    body = "".join(request.body)
+    body = b"".join(request.body)
     try:
         body = ujson.loads(body)
     except:
@@ -207,4 +209,5 @@ def check_forum_body(body):
     else:
         return True
 
-run(app, host='0.0.0.0', port=8081, reloader=True)
+run(app, host='0.0.0.0', port=argv[1], reloader=True)
+
