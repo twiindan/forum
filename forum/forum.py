@@ -10,7 +10,8 @@ app = Bottle()
 user_list = []
 USER_ATTRIBUTES = {'name', 'username', 'password', 'role', 'email'}
 FORUM_ATTRIBUTES = {'theme', 'subject', 'message'}
-ROLES = ['QA', 'DEVELOPER', 'MANAGER', 'DATABASE']
+ROLES = ['QA', 'DEVELOPER', 'MANAGER', 'BA']
+
 THEMES = ['Security', 'Development', 'Automation', 'Testing']
 user_messages_dict = defaultdict(list)
 forum_messages_dict = defaultdict(list)
