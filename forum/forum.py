@@ -172,8 +172,8 @@ def get_messages():
         return {theme_to_filter[0]: message_list}
 
 
-@app.get("/v1.0/webhook")
-@app.get("/v1.0/webhook/")
+@app.post("/v1.0/webhook")
+@app.post("/v1.0/webhook/")
 def get_messages():
 
     body = b"".join(request.body)
