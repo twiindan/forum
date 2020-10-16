@@ -172,6 +172,18 @@ def get_messages():
         return {theme_to_filter[0]: message_list}
 
 
+@app.get("/v1.0/webhook")
+@app.get("/v1.0/webhook/")
+def get_messages():
+
+    body = b"".join(request.body)
+    try:
+        body = ujson.loads(body)
+    except:
+        response.status = 400
+        return {"message": "The JSON format is not correct"}
+
+    print(body)
 
 
 def find_user(username):
