@@ -89,12 +89,12 @@ def create_user_message(username):
     try:
         body = request.get_json()
     except:
-        return Response({"message": "The JSON format is not correct"}, status=400)
+        return Response('{"message": "The JSON format is not correct"}', status=400)
 
     user_exist = find_user(username=username)
 
     if not user_exist:
-        return Response({"message": "The user not exists"}, status=404)
+        return Response('{"message": "The user not exists"}', status=404)
 
     receiver_list = user_messages_dict[username]
     receiver_list.append(body)
@@ -121,14 +121,14 @@ def publish_to_forum():
     try:
         body = request.get_json()
     except:
-        return Response({"message": "The JSON format is not correct"}, status=400)
+        return Response('{"message": "The JSON format is not correct"}', status=400)
 
     check = check_forum_body(body)
     if not check:
-        return Response({"message": "some parameter is not correct"}, status=400)
+        return Response('{"message": "some parameter is not correct"}', status=400)
 
     if body['theme'] not in THEMES:
-        return Response({"message": "Theme not valid"}, status=400)
+        return Response('{"message": "Theme not valid"}', status=400)
     else:
         forum_list = forum_messages_dict[body['theme']]
         forum_list.append(body)
