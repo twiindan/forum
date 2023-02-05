@@ -56,18 +56,18 @@ def create_user():
     try:
         body = request.get_json()
     except:
-        return Response(response={"message": "The JSON format is not correct"}, status=400, mimetype='application/json')
+        return Response(response='{"message": "The JSON format is not correct"}', status=400, mimetype='application/json')
 
     check = check_user_body(body)
 
     if not check:
-        return Response(response={"message": "some parameter is not correct"}, status=400, mimetype='application/json')
+        return Response(response='{"message": "some parameter is not correct"}', status=400, mimetype='application/json')
 
     if body['role'] not in ROLES:
-        return Response(response={"message": "Role not valid"}, status=400, mimetype='application/json')
+        return Response(response='{"message": "Role not valid"}', status=400, mimetype='application/json')
 
     if find_user(body['username']):
-        return Response(response={"message": "User exist!"}, status=409, mimetype='application/json')
+        return Response(response='{"message": "User exist!"}', status=409, mimetype='application/json')
 
     else:
         user_list.append(body)
