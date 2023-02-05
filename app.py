@@ -116,7 +116,7 @@ def delete_messages_from_user(username):
     return 'messages deleted'
 
 
-@app.route("/v1.0/forum/", methods=['POST'])
+@app.route("/v1.0/forum", methods=['POST'])
 def publish_to_forum():
     try:
         body = request.get_json()
