@@ -97,6 +97,12 @@ def create_user_message(username):
     if not user_exist:
         return Response('{"message": "The user not exists"}', status=404)
 
+    if not "message" in body:
+        return Response('{"message": "Message is a mandatory field"}', status=400)
+    else:
+        if len(body) > 1:
+            return Response('{"message": "Additional keys are not supported"}', status=400)
+
     receiver_list = user_messages_dict[username]
     receiver_list.append(body)
     return Response('message saved', status=200)
