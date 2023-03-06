@@ -24,7 +24,7 @@ def check_username(username, password):
     for user in user_list:
         if user['username'] == username:
             if user['password'] == password:
-                return True
+                return username
     return False
 
 
@@ -84,6 +84,7 @@ def list_users():
 
 
 @app.route("/v1.0/users/inbox/<username>", methods=['POST'])
+@auth.login_required
 def create_user_message(username):
 
     try:
@@ -101,8 +102,8 @@ def create_user_message(username):
     return Response('message saved', status=200)
 
 
-@auth.login_required
 @app.route("/v1.0/users/inbox/<username>", methods=['GET'])
+@auth.login_required
 def get_user_messages(username):
 
     receiver_list = user_messages_dict[username]
@@ -189,3 +190,6 @@ def check_forum_body(body):
         return False
     else:
         return True
+
+if __name__ == "__main__":
+    app.run()
