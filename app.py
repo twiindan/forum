@@ -113,7 +113,10 @@ def get_user_messages(username):
 @auth.login_required
 def delete_messages_from_user(username):
 
-    del(user_messages_dict[username])
+    try:
+        del(user_messages_dict[username])
+    except KeyError:
+        pass
     return 'messages deleted'
 
 
