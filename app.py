@@ -106,6 +106,10 @@ def create_user_message(username):
 @auth.login_required
 def get_user_messages(username):
 
+    user_exist = find_user(username=username)
+
+    if not user_exist:
+        return Response('{"message": "The user not exists"}', status=404)
     receiver_list = user_messages_dict[username]
     return {"username": username, "messages": receiver_list}
 
@@ -113,6 +117,10 @@ def get_user_messages(username):
 @auth.login_required
 def delete_messages_from_user(username):
 
+    user_exist = find_user(username=username)
+
+    if not user_exist:
+        return Response('{"message": "The user not exists"}', status=404)
     try:
         del(user_messages_dict[username])
     except KeyError:
