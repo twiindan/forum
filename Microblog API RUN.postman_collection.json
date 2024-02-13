@@ -1,0 +1,1485 @@
+{
+	"info": {
+		"_postman_id": "d177c350-84b8-446c-aa85-7ce137b8b259",
+		"name": "Microblog API RUN",
+		"description": "Welcome to the documentation for the Microblog API!\n\nThis project is written in Python, with the\n[Flask](https://flask.palletsprojects.com/) web framework. This documentation\nis generated automatically from the\n[project's source code](https://github.com/miguelgrinberg/microblog-api) using\nthe [APIFairy](https://github.com/miguelgrinberg/apifairy) Flask extension.\n\n## Introduction\n\nMicroblog-API is an easy to use web API for creating microblogs. It is an ideal\nproject to use when learning a front end framework, as it provides a fully\nimplemented back end that you can integrate against.\n\nMicroblog API provides all the base features required to implement a\nmicroblogging project:\n\n- User registration, login and logout\n- Password recovery flow with reset emails\n- Post creation and deletion\n- Follow and unfollow users\n- Feed with posts from followed users\n- Pagination\n- Option to disable authentication during development\n\n## Configuration\n\nIf you are running Microblog API yourself while developing your front end,\nthere are a number of environment variables that you can set to configure its\nbehavior. The variables can be defined directly in the environment or in a\n`.env` file in the project directory. The following table lists all the\nenvironment variables that are currently used:\n\n| Environment Variable | Default | Description |\n| - | - | - |\n| `SECRET_KEY` | `top-secret!` | A secret key used when signing tokens. |\n| `DATABASE_URL`  | `sqlite:///db.sqlite` | The database URL, as defined by the [SQLAlchemy](https://docs.sqlalchemy.org/en/14/core/engines.html#database-urls) framework. |\n| `SQL_ECHO` | not defined | Whether to echo SQL statements to the console for debugging purposes. |\n| `DISABLE_AUTH` | not defined | Whether to disable authentication. When running with authentication disabled, the user is assumed to be logged as the user with `id=1`, which must exist in the database. |\n| `ACCESS_TOKEN_MINUTES` | `15` | The number of minutes an access token is valid for. |\n| `REFRESH_TOKEN_DAYS` | `7` | The number of days a refresh token is valid for. |\n| `REFRESH_TOKEN_IN_COOKIE` | `yes` | Whether to return the refresh token in a secure cookie. |\n| `REFRESH_TOKEN_IN_BODY' | `no` | Whether to return the refresh token in the response body. |\n| `RESET_TOKEN_MINUTES` | `15` | The number of minutes a reset token is valid for. |\n| `PASSWORD_RESET_URL` | `http://localhost:3000/reset` | The URL that will be used in password reset links. |\n| `USE_CORS` | `yes` | Whether to allow cross-origin requests. If allowed, CORS support can be configured or customized with options provided by the Flask-CORS extension. |\n| `DOCS_UI` | `elements` | The UI library to use for the documentation. Allowed values are `swagger_ui`, `redoc`, `rapidoc` and `elements`. |\n| `MAIL_SERVER` | `localhost` | The mail server to use for sending emails. |\n| `MAIL_PORT` | `25` | The port to use for sending emails. |\n| `MAIL_USE_TLS` | not defined | Whether to use TLS when sending emails. |\n| `MAIL_USERNAME` | not defined | The username to use for sending emails. |\n| `MAIL_PASSWORD` | not defined | The password to use for sending emails. |\n| `MAIL_DEFAULT_SENDER` | `donotreply@microblog.example.com` | The default sender to use for emails. |\n\n## Authentication\n\nThe authentication flow for this API is based on *access* and *refresh*\ntokens.\n\nTo obtain an access and refresh token pair, the client must send a `POST`\nrequest to the `/api/tokens` endpoint, passing the username and password of\nthe user in a `Authorization` header, according to HTTP Basic Authentication\nscheme. The response includes the access and refresh tokens in the body. For\nadded security in single-page applications, the refresh token is also returned\nin a secure cookie.\n\nMost endpoints in this API are authenticated with the access token, passed\nin the `Authorization` header, using the `Bearer` scheme.\n\nAccess tokens are valid for 15 minutes (by default) from the time they are\nissued. When the access token is expired, the client can renew it using the\nrefresh token. For this, the client must send a `PUT` request to the\n`/api/tokens` endpoint, passing the expired access token in the body of the\nrequest, and the refresh token either in the body, or through the secure cookie\nsent when the tokens were requested. The response to this request will include\na new pair of tokens. Refresh tokens have a default validity period of 7 days,\nand can only be used to renew the access token they were returned with. An\nattempt to use a refresh token more than once is considered a possible attack,\nand will cause all existing tokens for the user to be revoked immediately as a\nmitigation measure.\n\nAll authentication failures are handled with a `401` status code in the\nresponse.\n\n### Password Resets\n\nThis API supports a password reset flow, to help users who forget their\npasswords regain access to their accounts. To issue a password reset request,\nthe client must send a `POST` request to `/api/tokens/reset`, passing the\nuser's email in the body of the request. The user will receive a password reset\nlink by email, based on the password reset URL entered in the configuration\nand a `token` query string paramter set to an email reset token, with a\nvalidity of 15 minutes.\n\nWhen the user clicks on the password reset link, the client application must\ncapture the `token` query string argument and send it in a `PUT` request to\n`/api/tokens/reset`, along with the new password chosen by the user.\n\n## Pagination\n\nAPI endpoints that return collections of resources, such as the users or posts,\nimplement pagination, and the client must use query string arguments to specify\nthe range of items to return.\n\nThe number of items to return is specified by the `limit` argument, which is\noptional. If not specified, the server sets the limit to a reasonable value for\nthe endpoint. If the limit is too large, the server may decide to use a lower\nvalue instead. The following example shows how to request the first 10 users:\n\n    http://localhost:5000/api/users?limit=10\n\nThe `offset` argument is used to specify the zero-based index of the first item\nto return. If not given, the server sets the offset to 0. The following example\nshows how to request the second page of users with a page size of 10:\n\n    http://localhost:5000/api/users?limit=10&offset=10\n\nSometimes paginating with the `offset` argument can be inconvenient, such as\nwith collections where new elements are not always inserted at the end of the\nlist. As an alternative to `offset`, the `after` argument can be used to set\nthe start item to the item after the one specified. This API supports `after`\nfor collections of blog posts, which are sorted by their publication time in\ndescending order, and for collections of users, which are sorted by their\nusername in ascending order. For blog posts, the `after` argument must be set\nto a date and time specification in ISO 8601 format, such as\n`2020-01-01T00:00:00Z`. For users, the `after` argument must be set to a\nstring. Examples:\n\n    http://localhost:5000/api/posts?limit=10&after=2021-01-01T00:00:00\n    http://localhost:5000/api/users/me/followers?limit=10&after=diana\n\nThe response body in a paginated request contains a `data` attribute that is\nset to the list of entities that are in the requested page. A `pagination`\nattribute is also included with `offset`, `limit`, `count` and `total`\nsub-attributes, which should enable the client to present pagination controls\nto the user.\n\n## Errors\n\nAll errors returned by this API use the following JSON structure:\n\n```json\n{\n    \"code\": <numeric error code>,\n    \"message\": <short error message>,\n    \"description\": <longer error description>,\n}\n```\n\nIn the case of schema validation errors, an `errors` property is also returned,\ncontaining a detailed list of validation errors found in the submitted request:\n\n```json\n{\n    \"code\": <error code>,\n    \"message\": <error message>,\n    \"description\": <error description>,\n    \"errors\": [ <error details>, ... ]\n}\n```",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "2396221",
+		"_collection_link": "https://warped-shuttle-7594.postman.co/workspace/API-Lessons~63163db5-dd31-45fb-b391-e24cda4abe79/collection/2396221-d177c350-84b8-446c-aa85-7ce137b8b259?action=share&source=collection_link&creator=2396221"
+	},
+	"item": [
+		{
+			"name": "Run",
+			"item": [
+				{
+					"name": "Register a new user",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.environment.set('userEmail', pm.variables.replaceIn('{{$randomEmail}}'))\r",
+									"pm.environment.set('basicAuthUsername', pm.variables.replaceIn('{{$randomUserName}}'))\r",
+									"pm.environment.set('basicAuthPassword', pm.variables.replaceIn('{{$randomPassword}}'))\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"var jsonData = pm.response.json();\r",
+									"pm.environment.set(\"user-id\", jsonData.id);\r",
+									"pm.environment.set(\"user-name\", jsonData.username)\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"{{basicAuthUsername}}\",\n    \"password\": \"{{basicAuthPassword}}\",\n    \"email\": \"{{userEmail}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{microblog_url}}/api/users",
+							"host": [
+								"{{microblog_url}}"
+							],
+							"path": [
+								"api",
+								"users"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Created",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"rep\",\n  \"username\": \"cupidatat et in ex\",\n  \"password\": \"adipisicing aute\",\n  \"about_me\": \"sunt\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/users",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"users"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"email\": \"reprehenderit elit\",\n  \"username\": \"adipisicing eu in mollit sit\",\n  \"id\": -14811235,\n  \"url\": \"laboris\",\n  \"avatar_url\": \"ea dolor\",\n  \"about_me\": \"mollit aliqua deserunt\",\n  \"first_seen\": \"1979-10-27T23:16:05.885Z\",\n  \"last_seen\": \"2022-08-01T17:56:47.360Z\",\n  \"posts_url\": \"deserunt ea\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Create new access and refresh tokens",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();\r",
+									"pm.environment.set(\"bearerToken\", jsonData.access_token);\r",
+									"\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{basicAuthUsername}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{basicAuthPassword}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{microblog_url}}/api/tokens",
+							"host": [
+								"{{microblog_url}}"
+							],
+							"path": [
+								"api",
+								"tokens"
+							]
+						},
+						"description": "The refresh token is returned in the body of the request or as a hardened\ncookie, depending on configuration. A cookie should be used when the\nclient is running in an insecure environment such as a web browser, and\ncannot adequately protect the refresh token against unauthorized access."
+					},
+					"response": [
+						{
+							"name": "OK",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"description": "Added as a part of security scheme: basic",
+										"key": "Authorization",
+										"value": "Basic <credentials>"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/tokens",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"tokens"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"access_token\": \"fugiat nostrud id est\",\n  \"refresh_token\": \"Duis cillum Lorem\"\n}"
+						},
+						{
+							"name": "Invalid username or password",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"description": "Added as a part of security scheme: basic",
+										"key": "Authorization",
+										"value": "Basic <credentials>"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/tokens",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"tokens"
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "text/plain"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Retrieve the authenticated user",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"username is the correct\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.username).to.eql(pm.environment.get(\"user-name\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{microblog_url}}/api/me",
+							"host": [
+								"{{microblog_url}}"
+							],
+							"path": [
+								"api",
+								"me"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "OK",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"description": "Added as a part of security scheme: bearer",
+										"key": "Authorization",
+										"value": "Bearer <token>"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/me",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"me"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"email\": \"reprehenderit elit\",\n  \"username\": \"adipisicing eu in mollit sit\",\n  \"id\": -14811235,\n  \"url\": \"laboris\",\n  \"avatar_url\": \"ea dolor\",\n  \"about_me\": \"mollit aliqua deserunt\",\n  \"first_seen\": \"1979-10-27T23:16:05.885Z\",\n  \"last_seen\": \"2022-08-01T17:56:47.360Z\",\n  \"posts_url\": \"deserunt ea\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Edit user information",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.environment.set('userEmail', pm.variables.replaceIn('{{$randomEmail}}'))\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Your test name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.about_me).to.eql(\"new about me\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"about_me\": \"new about me\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{microblog_url}}/api/me",
+							"host": [
+								"{{microblog_url}}"
+							],
+							"path": [
+								"api",
+								"me"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "OK",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"description": "Added as a part of security scheme: bearer",
+										"key": "Authorization",
+										"value": "Bearer <token>"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"password\": \"consequat ipsum ullamco voluptate culpa\",\n  \"username\": \"aliqua\",\n  \"email\": \"qui in dolor eu\",\n  \"about_me\": \"fugiat qui ipsum\",\n  \"old_password\": \"in consequat pariatur\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/me",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"me"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"email\": \"reprehenderit elit\",\n  \"username\": \"adipisicing eu in mollit sit\",\n  \"id\": -14811235,\n  \"url\": \"laboris\",\n  \"avatar_url\": \"ea dolor\",\n  \"about_me\": \"mollit aliqua deserunt\",\n  \"first_seen\": \"1979-10-27T23:16:05.885Z\",\n  \"last_seen\": \"2022-08-01T17:56:47.360Z\",\n  \"posts_url\": \"deserunt ea\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Follow a user",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{microblog_url}}/api/me/following/1",
+							"host": [
+								"{{microblog_url}}"
+							],
+							"path": [
+								"api",
+								"me",
+								"following",
+								"1"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "User followed successfully.",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"description": "Added as a part of security scheme: bearer",
+										"key": "Authorization",
+										"value": "Bearer <token>"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/me/following/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"me",
+										"following",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "8638516",
+											"description": "(Required) "
+										}
+									]
+								}
+							},
+							"status": "No Content",
+							"code": 204,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{}"
+						},
+						{
+							"name": "User not found",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"description": "Added as a part of security scheme: bearer",
+										"key": "Authorization",
+										"value": "Bearer <token>"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/me/following/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"me",
+										"following",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "8638516",
+											"description": "(Required) "
+										}
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "text/plain"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						},
+						{
+							"name": "User already followed.",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"description": "Added as a part of security scheme: bearer",
+										"key": "Authorization",
+										"value": "Bearer <token>"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/me/following/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"me",
+										"following",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "8638516",
+											"description": "(Required) "
+										}
+									]
+								}
+							},
+							"status": "Conflict",
+							"code": 409,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "text/plain"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Unfollow a user",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{microblog_url}}/api/me/following/1",
+							"host": [
+								"{{microblog_url}}"
+							],
+							"path": [
+								"api",
+								"me",
+								"following",
+								"1"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "User unfollowed successfully.",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [
+									{
+										"description": "Added as a part of security scheme: bearer",
+										"key": "Authorization",
+										"value": "Bearer <token>"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/me/following/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"me",
+										"following",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "8638516",
+											"description": "(Required) "
+										}
+									]
+								}
+							},
+							"status": "No Content",
+							"code": 204,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{}"
+						},
+						{
+							"name": "User not found",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [
+									{
+										"description": "Added as a part of security scheme: bearer",
+										"key": "Authorization",
+										"value": "Bearer <token>"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/me/following/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"me",
+										"following",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "8638516",
+											"description": "(Required) "
+										}
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "text/plain"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						},
+						{
+							"name": "User is not followed.",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [
+									{
+										"description": "Added as a part of security scheme: bearer",
+										"key": "Authorization",
+										"value": "Bearer <token>"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/me/following/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"me",
+										"following",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "8638516",
+											"description": "(Required) "
+										}
+									]
+								}
+							},
+							"status": "Conflict",
+							"code": 409,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "text/plain"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Create a new post",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"pm.test(\"text post is saved\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.text).to.eql(\"et Ut ipsum laborum Excepteur\");",
+									"});",
+									"var jsonData = pm.response.json();",
+									"pm.environment.set(\"post-id\", jsonData.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"text\": \"et Ut ipsum laborum Excepteur\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{microblog_url}}/api/posts",
+							"host": [
+								"{{microblog_url}}"
+							],
+							"path": [
+								"api",
+								"posts"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Created",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"description": "Added as a part of security scheme: bearer",
+										"key": "Authorization",
+										"value": "Bearer <token>"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"text\": \"et Ut ipsum laborum Excepteur\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/posts",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"posts"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"text\": \"voluptate in\",\n  \"id\": 77859566,\n  \"url\": \"ea\",\n  \"timestamp\": \"1969-02-10T00:42:46.469Z\",\n  \"author\": {\n    \"email\": \"in voluptate\",\n    \"username\": \"ut commodo\",\n    \"id\": -98844270,\n    \"url\": \"pariatur ea\",\n    \"avatar_url\": \"adipisicing Duis sint\",\n    \"about_me\": \"Ut proident culpa occaecat\",\n    \"first_seen\": \"1995-10-03T04:44:27.671Z\",\n    \"last_seen\": \"2006-12-18T13:03:14.384Z\",\n    \"posts_url\": \"aute proident do Lorem aliquip\"\n  }\n}"
+						}
+					]
+				},
+				{
+					"name": "Retrieve the user's post feed",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{microblog_url}}/api/feed",
+							"host": [
+								"{{microblog_url}}"
+							],
+							"path": [
+								"api",
+								"feed"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "OK",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"description": "Added as a part of security scheme: bearer",
+										"key": "Authorization",
+										"value": "Bearer <token>"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/feed?limit=8638516&offset=8638516&after=1957-01-22T14:06:52.938Z",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"feed"
+									],
+									"query": [
+										{
+											"key": "limit",
+											"value": "8638516"
+										},
+										{
+											"key": "offset",
+											"value": "8638516"
+										},
+										{
+											"key": "after",
+											"value": "1957-01-22T14:06:52.938Z"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"pagination\": {\n    \"limit\": -82441152,\n    \"offset\": 83897932,\n    \"count\": 86299519,\n    \"total\": -64586383\n  },\n  \"data\": [\n    {\n      \"text\": \"laborum\",\n      \"id\": 90325084,\n      \"url\": \"qui commodo aliqua sunt\",\n      \"timestamp\": \"2000-12-12T11:35:12.758Z\",\n      \"author\": {\n        \"email\": \"cupidatat ea\",\n        \"username\": \"fugiat et e\",\n        \"id\": -8927903,\n        \"url\": \"nisi cons\",\n        \"avatar_url\": \"do non aliquip nostrud\",\n        \"about_me\": \"ut\",\n        \"first_seen\": \"2008-10-22T05:29:48.311Z\",\n        \"last_seen\": \"2016-09-12T17:18:26.872Z\",\n        \"posts_url\": \"magna nulla\"\n      }\n    },\n    {\n      \"text\": \"laboris esse elit\",\n      \"id\": 1474012,\n      \"url\": \"qui labore\",\n      \"timestamp\": \"1976-12-09T19:52:38.177Z\",\n      \"author\": {\n        \"email\": \"voluptate do consectetur in\",\n        \"username\": \"proident dolor occaecat dolore\",\n        \"id\": 74268875,\n        \"url\": \"irure in aliquip\",\n        \"avatar_url\": \"am\",\n        \"about_me\": \"minim sint\",\n        \"first_seen\": \"1973-07-24T00:50:10.418Z\",\n        \"last_seen\": \"1990-11-26T10:58:39.772Z\",\n        \"posts_url\": \"au\"\n      }\n    }\n  ]\n}"
+						}
+					]
+				},
+				{
+					"name": "Edit a post",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Your test name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.text).to.eql(\"anim esse amet\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"text\": \"anim esse amet\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{microblog_url}}/api/posts/{{post-id}}",
+							"host": [
+								"{{microblog_url}}"
+							],
+							"path": [
+								"api",
+								"posts",
+								"{{post-id}}"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "OK",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"description": "Added as a part of security scheme: bearer",
+										"key": "Authorization",
+										"value": "Bearer <token>"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"text\": \"anim esse amet\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/posts/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"posts",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "8638516",
+											"description": "(Required) "
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"text\": \"voluptate in\",\n  \"id\": 77859566,\n  \"url\": \"ea\",\n  \"timestamp\": \"1969-02-10T00:42:46.469Z\",\n  \"author\": {\n    \"email\": \"in voluptate\",\n    \"username\": \"ut commodo\",\n    \"id\": -98844270,\n    \"url\": \"pariatur ea\",\n    \"avatar_url\": \"adipisicing Duis sint\",\n    \"about_me\": \"Ut proident culpa occaecat\",\n    \"first_seen\": \"1995-10-03T04:44:27.671Z\",\n    \"last_seen\": \"2006-12-18T13:03:14.384Z\",\n    \"posts_url\": \"aute proident do Lorem aliquip\"\n  }\n}"
+						},
+						{
+							"name": "Not allowed to edit this post",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"description": "Added as a part of security scheme: bearer",
+										"key": "Authorization",
+										"value": "Bearer <token>"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"text\": \"anim esse amet\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/posts/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"posts",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "8638516",
+											"description": "(Required) "
+										}
+									]
+								}
+							},
+							"status": "Forbidden",
+							"code": 403,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "text/plain"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						},
+						{
+							"name": "Post not found",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"description": "Added as a part of security scheme: bearer",
+										"key": "Authorization",
+										"value": "Bearer <token>"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"text\": \"anim esse amet\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/posts/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"posts",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "8638516",
+											"description": "(Required) "
+										}
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "text/plain"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Delete a post",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{microblog_url}}/api/posts/{{post-id}}",
+							"host": [
+								"{{microblog_url}}"
+							],
+							"path": [
+								"api",
+								"posts",
+								"{{post-id}}"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "No Content",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [
+									{
+										"description": "Added as a part of security scheme: bearer",
+										"key": "Authorization",
+										"value": "Bearer <token>"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/posts/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"posts",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "8638516",
+											"description": "(Required) "
+										}
+									]
+								}
+							},
+							"status": "No Content",
+							"code": 204,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "text/plain"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						},
+						{
+							"name": "Not allowed to delete the post",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [
+									{
+										"description": "Added as a part of security scheme: bearer",
+										"key": "Authorization",
+										"value": "Bearer <token>"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/posts/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"posts",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "8638516",
+											"description": "(Required) "
+										}
+									]
+								}
+							},
+							"status": "Forbidden",
+							"code": 403,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "text/plain"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Revoke an access token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{microblog_url}}/api/tokens",
+							"host": [
+								"{{microblog_url}}"
+							],
+							"path": [
+								"api",
+								"tokens"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Token revoked",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/tokens",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"tokens"
+									]
+								}
+							},
+							"status": "No Content",
+							"code": 204,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{}"
+						},
+						{
+							"name": "Invalid access token",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/tokens",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"tokens"
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "text/plain"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://microblog-api.azurewebsites.net/",
+			"type": "string",
+			"disabled": true
+		}
+	]
+}
