@@ -69,3 +69,6 @@ jobs:
           collection: Microblog API RUN.postman_collection.json
           environment: Microblog.postman_environment.json
           reporters: cli
+
+      - name: Output summary to console
+        run: echo ${{ steps.run-newman.outputs.summary }}
