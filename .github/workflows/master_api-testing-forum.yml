@@ -61,3 +61,11 @@ jobs:
           app-name: 'api-testing-forum'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_0023BB4AFD784BBEBFAA5C611A4B8747 }}
+
+      - name: Run API Tests
+        id: run-newman
+        uses: anthonyvscode/newman-action@v1
+        with:
+          collection: Microblog API RUN.postman_collection.json
+          environment: Microblog.postman_environment.json
+          reporters: cli
